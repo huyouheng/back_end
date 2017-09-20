@@ -22,11 +22,13 @@
                <Select style="width:200px" v-model="articleSort">
 		        <Option v-for="item in getSort" :value="item.id" :key="item.id">{{ item.name }}</Option>
 		    </Select>
+		    	<label class="control-label">出现的位置</label>
+		    	<Input v-model="articlePosition" size="large"></Input>
         	</div>
-        	<div class="block" style="height:400px;overflow: auto;">
+        	<div class="block" style="height:auto;overflow: auto;">
         		<quill-editor ref="sendArticleTextEditor"
                       v-model="articleContent"
-                      :options="editorOption" style="height:400px">
+                      :options="editorOption" style="min-height:100px">
        		 	</quill-editor>
         	</div>
         	<div class="block">
@@ -43,15 +45,19 @@
         			@click="isSelectIcon = true">
         	</div>
         	<div class="block">
-				<button class="btn btn-success btn-block" @click="sendArticle">发表文章</button>
+				<button class="btn btn-success btn-block" @click="sendArticle"
+					 v-if="!isNeedUpdateArticle">发表文章</button>
+				<button class="btn btn-success btn-block" @click="sendArticle"
+					 v-if="isNeedUpdateArticle">更新文章</button>
         	</div>
         </div>
         <Modal
-	        title="选择图片"
 	        v-model="isSelectIcon"
 	        class-name="vertical-center-modal">
-	        <img :src="item.url" alt="" v-for="item in getPicList" 
-	        	class="selectPicItem" @click="selectThisPic(item.url)"/> 
+	        <recent-upload-pic title="最近上传的图片" name="send_article_pic"
+	        	v-bind:needDelete="false"
+	        	v-bind:needSelect="true"
+	        	v-on:returnSelectEvent="hasSelected"></recent-upload-pic>
 	    </Modal>
 	     <simplert :useRadius="true"
                   :useIcon="true"
@@ -66,6 +72,7 @@
   import Simplert from 'vue2-simplert';
   Quill.register('modules/imageImport', ImageImport)
   Quill.register('modules/imageResize', ImageResize)
+  import RecentUploadPic from '../../components/oss/RecentUploadPic.vue';
 	export default{
 		data(){
 			return {
@@ -75,6 +82,7 @@
 				articleSort:'',
 				articleContent:'',
 				articleIcon:'',
+				articlePosition:'',
 				isSelectIcon:false,
 				editorOption: {
 					theme: 'snow',
@@ -91,10 +99,17 @@
 			            },
 		        	}
 				},
+				sendArticleUrl:'',
+				sendArticleMethod:'',
 			}
 		},
 		components:{
-			Simplert,
+			Simplert,RecentUploadPic
+		},
+		created(){
+			if(this.getSort.length==0){
+                this.$store.dispatch('getSortFromServer',{_this:this}); //向服务器获取分类
+             }
 		},
 		computed:{
 			getPicList(){ //得到所有图片
@@ -102,6 +117,37 @@
         	},
         	 getSort(){
                 return this.$store.getters.getAllArtSort;
+            },
+            isNeedUpdateArticle(){
+            	let id = this.$store.state.article.editArtId;
+				if( id != null){// 这里表示需要更新文章
+					const _this =this;
+					this.$axios({
+						'url': _this.$config.host+'/article/'+id+'?api=true',
+						'method':'get',
+					})
+					.then((response)=>{
+						let data =response.data;
+						_this.articleAuthor = data.author;
+						_this.articleTitle = data.title;
+						_this.articleContent = data.content;
+						_this.articleDesc = data.description;
+						_this.articleSort = data.sort_id;
+						_this.articleIcon = data.icon;
+						_this.articlePosition = data.position;
+					})
+					.catch((error)=>{
+						console.log(error);
+					})
+					this.sendArticleUrl= this.$config.host+'/article/'+id;
+					this.sendArticleMethod = 'put';
+					return true;
+				}else{
+					
+					this.sendArticleUrl= this.$config.host+'/article';
+					this.sendArticleMethod = 'post';
+					return false;
+				}
             },
 		},
 		methods:{
@@ -118,6 +164,9 @@
 					return msg(this,'error','内容为空');
 				if(this.articleIcon =='')
 					return msg(this,'error','封面图片为空');
+				if(this.articlePosition =='')
+					return msg(this,'error','articlePosition为空');
+
 				const _this = this;
 				let data = {
 						title:this.articleTitle,
@@ -126,11 +175,13 @@
 						icon:this.articleIcon,
 						sort_id:this.articleSort,
 						content:this.articleContent,
+						position:this.articlePosition,
 					};
+
 				let postArticle = ()=>{
 					this.$axios({
-					url:_this.$config.host+'/article',
-					method:'post',
+					url:_this.sendArticleUrl,
+					method:_this.sendArticleMethod,
 					data:{
 						title:_this.articleTitle,
 						author:_this.articleAuthor,
@@ -138,6 +189,7 @@
 						icon:_this.articleIcon,
 						sort_id:_this.articleSort,
 						content:_this.articleContent,
+						position:_this.articlePosition,
 					}
 					})
 					.then((response)=>{
@@ -175,6 +227,9 @@
 			selectThisPic(url){ //点击图片 进行选择
 				this.articleIcon = url;
 			},
+			hasSelected(url){
+				this.selectThisPic(url)
+			}
 
 		},
 	}

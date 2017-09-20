@@ -54,7 +54,7 @@
         </div>
       </li>
       <li><div class="m-t-small">
-        <router-link to="/send_article"><i class="icon-plus"></i> POST</router-link>
+        <router-link to="/send_article" style="line-height: 30px;" @click="changeEditArtId"><i class="icon-plus"></i> POST</router-link>
         </div></li>
       <li class="dropdown shift" data-toggle="shift:appendTo" data-target=".nav-primary .nav">
         <a href="#" class="dropdown-toggle" data-toggle="dropdown"><i class="icon-cog icon-xlarge visible-sm visible-sm-inline"></i>Settings <b class="caret hidden-sm-only"></b></a>
@@ -152,7 +152,9 @@
            });
         },
         methods:{
-          
+            changeEditArtId(){
+                this.$store.state.article.editArtId=null
+           },
         }
     }
 </script>

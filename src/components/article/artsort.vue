@@ -61,7 +61,9 @@
             Simplert
         },
 		created(){
-			 this.$store.dispatch('getSortFromServer',{_this:this}); //向服务器获取分类
+			 if(this.getSort.length==0){
+                this.$store.dispatch('getSortFromServer',{_this:this}); //向服务器获取分类
+             }
 		},
 		computed:{
             getSort(){

@@ -6,7 +6,9 @@
         <hr>
         <div class="row">
             <div class="col-md-12 col-lg-12">
-               <recent-upload-pic title="最近上传的图片" name="oss1"></recent-upload-pic>
+               <recent-upload-pic title="最近上传的图片" name="oss1"
+               v-bind:needDelete="true"
+                v-bind:needSelect="false"></recent-upload-pic>
             </div>
         </div>
 

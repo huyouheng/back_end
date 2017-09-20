@@ -1,6 +1,7 @@
 const state = {
 	 ArtSortList:[],
 	 ArtcileList:[],
+	 editArtId:null,
 }
 
 const getters = {
