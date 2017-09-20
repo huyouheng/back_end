@@ -8,9 +8,7 @@ import 'iview/dist/styles/iview.css'
 import Iview from 'iview'
 import Axios from 'axios'
 import store from './store'
-import VueQuillEditor from 'vue-quill-editor'
 Vue.use(Iview);
-Vue.use(VueQuillEditor);
 import VueLazyload from 'vue-lazyload'
 Vue.use(VueLazyload)
 Vue.prototype.$axios=Axios

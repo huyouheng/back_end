@@ -26,10 +26,7 @@
 		    	<Input v-model="articlePosition" size="large"></Input>
         	</div>
         	<div class="block" style="height:auto;overflow: auto;">
-        		<quill-editor ref="sendArticleTextEditor"
-                      v-model="articleContent"
-                      :options="editorOption" style="min-height:100px">
-       		 	</quill-editor>
+        		 	<div id="editor" type="text/plain" style="width:100%;height:auto;"></div>
         	</div>
         	<div class="block">
         		<label class="control-label">封面图片 
@@ -66,12 +63,15 @@
     </div>	
 </template>
 <script>
-  import Quill from 'quill'
+
+  	import '../../../static/editor/ueditor.config'
+	import '../../../static/editor/ueditor.all.min.js' 
+	import '../../../static/editor/lang/zh-cn/zh-cn'
+  
   import { ImageImport } from './ImageImport.js'
   import { ImageResize } from './ImageResize.js'
   import Simplert from 'vue2-simplert';
-  Quill.register('modules/imageImport', ImageImport)
-  Quill.register('modules/imageResize', ImageResize)
+   
   import RecentUploadPic from '../../components/oss/RecentUploadPic.vue';
 	export default{
 		data(){
@@ -84,23 +84,9 @@
 				articleIcon:'',
 				articlePosition:'',
 				isSelectIcon:false,
-				editorOption: {
-					theme: 'snow',
-					placeholder: '编辑正文...',
-					modules: {
-						history: {
-			              delay: 1000,
-			              maxStack: 50,
-			              userOnly: false
-			            },
-			            imageImport: true,
-						imageResize: {
-			              displaySize: true
-			            },
-		        	}
-				},
 				sendArticleUrl:'',
 				sendArticleMethod:'',
+				editor:''
 			}
 		},
 		components:{
@@ -110,6 +96,15 @@
 			if(this.getSort.length==0){
                 this.$store.dispatch('getSortFromServer',{_this:this}); //向服务器获取分类
              }
+		},
+		mounted(){
+			this.editor = UE.getEditor('editor',{BaseUrl:'',UEDITOR_HOME_URL:'static/editor/'});
+			
+			// setInterval(()=>{
+			// 	this.articleContent = this.editor.getContent();
+			// 	console.log(this.articleContent);
+			// },3000)
+
 		},
 		computed:{
 			getPicList(){ //得到所有图片
@@ -130,11 +125,13 @@
 						let data =response.data;
 						_this.articleAuthor = data.author;
 						_this.articleTitle = data.title;
-						_this.articleContent = data.content;
 						_this.articleDesc = data.description;
 						_this.articleSort = data.sort_id;
 						_this.articleIcon = data.icon;
 						_this.articlePosition = data.position;
+						setTimeout(()=>{
+							_this.editor.setContent(data.content);
+						},2000)
 					})
 					.catch((error)=>{
 						console.log(error);
@@ -152,6 +149,7 @@
 		},
 		methods:{
 			sendArticle(){
+				this.articleContent = this.editor.getContent();
 				if(this.articleTitle =='')
 					return msg(this,'error','标题为空');
 				if(this.articleAuthor =='')
