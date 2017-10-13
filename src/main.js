@@ -3,12 +3,13 @@
 import Vue from 'vue'
 import App from './App'
 import config from './config.js'
-import router from './router'
 import 'iview/dist/styles/iview.css'
 import Iview from 'iview'
+Vue.use(Iview);
+import router from './router'
+
 import Axios from 'axios'
 import store from './store'
-Vue.use(Iview);
 import VueLazyload from 'vue-lazyload'
 Vue.use(VueLazyload)
 Vue.prototype.$axios=Axios

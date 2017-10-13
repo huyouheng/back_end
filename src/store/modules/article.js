@@ -16,11 +16,11 @@ const getters = {
 const actions = {
 	 getSortFromServer(context,{_this}){
 	 	_this.$axios({
-	 		url:_this.$config.host+'/artsort',
+	 		url:_this.$config.host+_this.$config.category,
 	 		method:'get'
 	 	})
 	 	.then((response)=>{
-	 		let data = response.data.data;
+	 		let data = response.data.result.data;
 	 		for(let i=0;i<data.length;i++){
 	 			context.commit('pushOneItemSort',{data:data[i]});
 	 		}
@@ -31,7 +31,7 @@ const actions = {
 	 },
 	 getArticleFromServer(context,{_this}){ //获取文章
 	 	_this.$axios({
-	 		url:_this.$config.host+'/article',
+	 		url:_this.$config.host+_this.$config.article,
 	 		method:'get'
 	 	})
 	 	.then((response)=>{

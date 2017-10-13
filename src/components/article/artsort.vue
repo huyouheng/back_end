@@ -10,7 +10,8 @@
             				<thead>
             					<tr>
             						<th>id</th>
-            						<th>name</th>
+                                    <th>name</th>
+            						<th>description</th>
             						<th>created</th>
             						<th>operation</th>
             					</tr>
@@ -18,7 +19,8 @@
             				<tbody>
             					<tr v-for="item in getSort">
             						<td>{{ item.id }}</td>
-            						<td>{{ item.name }}</td>
+                                    <td>{{ item.name }}</td>
+            						<td>{{ item.description }}</td>
             						<td>{{ item.created_at }}</td>
             						<td>
             							<Button type="ghost" size="small" shape="circle" icon="android-delete" 
@@ -34,7 +36,20 @@
                                         </Input>
                                     </td>
                                     <td>
+                                        <Input v-model="StoreDesc" size="large"
+                                            placeholder="input sort description">
+                                        </Input>
+                                    </td>
+                                    <td>
+                                        <Button type="success" @click="isSelectIcon = true">选择图片</Button> 
+                                    </td>
+                                    <td>
                                         <Button type="success" @click="submitStoreSort">创建分类</Button> 
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="5" class="text-center" v-if="categoryIcon">
+                                        <img width="100" height="100" :src="categoryIcon" alt="">
                                     </td>
                                 </tr>
             				</tbody>
@@ -42,6 +57,14 @@
             		</div>
                </div>
             </div>
+            <Modal
+                v-model="isSelectIcon"
+                class-name="vertical-center-modal">
+                <recent-upload-pic title="最近上传的图片" name="send_article_pic"
+                    v-bind:needDelete="false"
+                    v-bind:needSelect="true"
+                    v-on:returnSelectEvent="hasSelected"></recent-upload-pic>
+            </Modal>
             <simplert :useRadius="true"
                   :useIcon="true"
                   ref="ArticleSortPage">
@@ -50,15 +73,20 @@
 </template>
 <script>
 	import Simplert from 'vue2-simplert';
+    import RecentUploadPic from '../../components/oss/RecentUploadPic.vue';
 	export default{
 		name:'artsort',
 		data(){
 			return {
-				StoreSort:''
+				StoreSort:'',
+                StoreDesc:'',
+                StoreIcon:'',
+                categoryIcon:'',//专栏的Icon
+                isSelectIcon:false,
 			}
 		},
 		components:{
-            Simplert
+            Simplert,RecentUploadPic
         },
 		created(){
 			 if(this.getSort.length==0){
@@ -77,19 +105,23 @@
                 const _this = this;
                 let addSort = ()=>{
                     this.$axios({
-                        url:_this.$config.host+'/artsort/',
+                        url:_this.$config.host+_this.$config.category,
                         method:'post',
                         data:{
-                            'name':_this.StoreSort
+                            'name':_this.StoreSort,
+                            'file_id':_this.StoreIcon,
+                            'description':_this.StoreDesc
                         }
                      })
                      .then((response)=>{
                         let status = response.data.status;
-                        if(status === 1){
+                        if(status !== 200 && response.data.code == 1){
                             return msg(_this,'error','Store Sort Fail');
                         }
                         _this.$store.commit('pushOneItemSort',{data:response.data.result});
                         _this.StoreSort='';
+                        _this.StoreIcon='';
+                        _this.StoreDesc='';
                         return msg(_this,'success','Store Sort success');
                      })
                      .catch((error)=>{
@@ -111,12 +143,12 @@
             	const _this = this;
                 let delSort = ()=>{
                     this.$axios({
-                        url:_this.$config.host+'/artsort/'+item.id,
+                        url:_this.$config.host+_this.$config.category+'/'+item.id,
                         method:'delete',
                      })
                      .then((response)=>{
-                        let status = response.data.status;
-                        if(status === 1){
+                        let code = response.data.code;
+                        if(code === 1){
                             return msg(_this,'error','Delete Sort Fail');
                         }
                         _this.$store.commit('deleteOneItemSort',{item:item});
@@ -137,6 +169,10 @@
                 };
                 this.$refs.ArticleSortPage.openSimplert(obj);
             },
+            hasSelected(url,id){
+                this.StoreIcon = id;
+                this.categoryIcon = url;
+            }
         },
 
 	}

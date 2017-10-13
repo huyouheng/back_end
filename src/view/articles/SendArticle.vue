@@ -19,11 +19,11 @@
         	</div>
         	<div class="block">
                <label class="control-label">分类</label>
-               <Select style="width:200px" v-model="articleSort">
-		        <Option v-for="item in getSort" :value="item.id" :key="item.id">{{ item.name }}</Option>
-		    </Select>
+               <select multiple style="width:200px;heigth:50px;line-height: 50px;display: inline-block;border:0px;" v-model="articleSort">
+		        	<option v-for="item in getSort" :value="item.id" :key="item.id">{{ item.name }}</option>
+		    </select>
 		    	<label class="control-label">出现的位置</label>
-		    	<Input v-model="articlePosition" size="large"></Input>
+		    	<Input v-model="articlePosition" style="width:200px;"></Input>
         	</div>
         	<div class="block" style="height:auto;overflow: auto;">
         		 	<div id="editor" type="text/plain" style="width:100%;height:auto;"></div>
@@ -37,7 +37,7 @@
         		<hr>
         	</div>
         	<div class="block text-center">
-        		<img :src="articleIcon" 
+        		<img :src="articleIconShow" 
         			style="width:100px;height:100px;margin:0 auto;cursor:pointer"
         			@click="isSelectIcon = true">
         	</div>
@@ -79,38 +79,33 @@
 				articleTitle:'',
 				articleAuthor:'',
 				articleDesc:'',
-				articleSort:'',
+				articleSort:[],
 				articleContent:'',
 				articleIcon:'',
 				articlePosition:'',
 				isSelectIcon:false,
 				sendArticleUrl:'',
 				sendArticleMethod:'',
-				editor:''
+				editor:'',
+				articleIconShow:''
 			}
 		},
 		components:{
 			Simplert,RecentUploadPic
 		},
 		created(){
-			if(this.getSort.length==0){
+			if(this.$store.state.article.ArtSortList.length == 0){
                 this.$store.dispatch('getSortFromServer',{_this:this}); //向服务器获取分类
              }
 		},
 		mounted(){
 			this.editor = UE.getEditor('editor',{BaseUrl:'',UEDITOR_HOME_URL:'static/editor/'});
-			
-			// setInterval(()=>{
-			// 	this.articleContent = this.editor.getContent();
-			// 	console.log(this.articleContent);
-			// },3000)
-
 		},
 		computed:{
 			getPicList(){ //得到所有图片
             	return this.$store.getters.getPictureList;
         	},
-        	 getSort(){
+        	getSort(){
                 return this.$store.getters.getAllArtSort;
             },
             isNeedUpdateArticle(){
@@ -118,30 +113,35 @@
 				if( id != null){// 这里表示需要更新文章
 					const _this =this;
 					this.$axios({
-						'url': _this.$config.host+'/article/'+id+'?api=true',
+						'url': _this.$config.host+_this.$config.article+'/'+id,
 						'method':'get',
 					})
 					.then((response)=>{
-						let data =response.data;
+						let data =response.data.result;
 						_this.articleAuthor = data.author;
 						_this.articleTitle = data.title;
 						_this.articleDesc = data.description;
-						_this.articleSort = data.sort_id;
-						_this.articleIcon = data.icon;
+						if (typeof(data.sort_id) == "object"){
+							for (let i = 0; i < data.sort_id.length; i++){
+								_this.articleSort[i] = data.sort_id[i];
+							}
+						}
+						_this.articleIcon = data.file_id;
 						_this.articlePosition = data.position;
 						setTimeout(()=>{
 							_this.editor.setContent(data.content);
+							console.log(data.content);
 						},2000)
 					})
 					.catch((error)=>{
 						console.log(error);
 					})
-					this.sendArticleUrl= this.$config.host+'/article/'+id;
+					this.sendArticleUrl= this.$config.host+this.$config.article+'/'+id;
 					this.sendArticleMethod = 'put';
 					return true;
 				}else{
 					
-					this.sendArticleUrl= this.$config.host+'/article';
+					this.sendArticleUrl= this.$config.host+this.$config.article;
 					this.sendArticleMethod = 'post';
 					return false;
 				}
@@ -170,7 +170,7 @@
 						title:this.articleTitle,
 						author:this.articleAuthor,
 						description:this.articleDesc,
-						icon:this.articleIcon,
+						file_id:this.articleIcon,
 						sort_id:this.articleSort,
 						content:this.articleContent,
 						position:this.articlePosition,
@@ -184,7 +184,7 @@
 						title:_this.articleTitle,
 						author:_this.articleAuthor,
 						description:_this.articleDesc,
-						icon:_this.articleIcon,
+						file_id:_this.articleIcon,
 						sort_id:_this.articleSort,
 						content:_this.articleContent,
 						position:_this.articlePosition,
@@ -192,19 +192,19 @@
 					})
 					.then((response)=>{
 						let data = response.data;
-						if(data.status == 1)
+
+						if(data.code == 1)
 							return msg(_this,'error','Post Article Fail');
-						let id = data.result;
+						let id = data.result.id;
 						let item = {
 							id:id,
 							title:_this.articleTitle,
 							author:_this.articleAuthor,
 							description:_this.articleDesc,
-							icon:_this.articleIcon,
+							file_id:_this.articleIcon,
 							sort_id:_this.articleSort,
 							content:_this.articleContent,
 						};
-						console.log(item);
 						_this.$store.commit('pushOneItemArticle',{data:item});
 						return msg(_this,'success','Post Article success');
 					})
@@ -223,10 +223,11 @@
                 this.$refs.SendArticlePage.openSimplert(obj);
 			},
 			selectThisPic(url){ //点击图片 进行选择
-				this.articleIcon = url;
+				this.articleIconShow = url;
 			},
-			hasSelected(url){
+			hasSelected(url,id){
 				this.selectThisPic(url)
+				this.articleIcon = id;
 			}
 
 		},

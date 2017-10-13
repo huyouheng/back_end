@@ -29,18 +29,14 @@ const actions = {
 			}
 		}
 		_this.$axios({
-            url:_this.$config.host+'/object/'+name,
+            url:_this.$config.host+_this.$config.version+_this.$config.object+'/'+name,
             method:'get'
         })
         .then((response)=>{
             const data = response.data;
-            if(data.status === 0){ //有数据
+            if(data.status === 200){ //有数据
                 let result = data.result;
-                context.commit('updateObjectList',
-                	{
-                		name:name,
-                		data:result
-                	});
+                context.commit('updateObjectList',{data:result });
             }
         })
         .catch((error)=>{
@@ -50,11 +46,11 @@ const actions = {
 	updateBucketList(context,{_this}){ //更新Bucket数据,这里是整体更新
 		_this.$axios({
 	        method:'get',
-	        url:_this.$config.host+'/bucket'
+	        url:_this.$config.host+_this.$config.version+_this.$config.bucket
 	    })
 	    .then((response)=>{
 	        let data = response.data;
-	        if(data.status == 0 && data.code == 200){
+	        if(data.status == 200 && data.code == 0){
 	        	context.commit('reinitBucketList');
 	            for(let i = 0 ;i < data.result.length ;i++){
 	            	context.commit('updateBucketList',{data:data.result[i]});
@@ -69,11 +65,11 @@ const actions = {
 	},
 	updatePictureList(context,{_this,page,isFront}){ //处理图片与服务器交互
 		_this.$axios({
-			url:_this.$config.host+'/file?page='+page,
+			url:_this.$config.host+'/api/v1/file?page='+page,
 			method:'get'
 		})
 		.then((response)=>{
-			if(response.data.code == 200 && response.data.status == 0){
+			if(response.data.code == 0 && response.data.status == 200){
 				let data = response.data.result.data;
 				for(let i=0;i<data.length;i++){
 					context.commit('updatePictureList',{data:data[i],isFront:isFront});
@@ -87,7 +83,7 @@ const actions = {
 	},
 }
 const mutations = {
-	updateObjectList(state ,{name,data}){
+	updateObjectList(state ,{data}){
 		state.BucketObjectAllList.push(data)
 	},
 	updateBucketList(state,{data}){

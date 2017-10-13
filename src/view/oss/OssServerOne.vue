@@ -167,13 +167,13 @@ export default {
              const _this =this;
              let delBucket = ()=>{
                 this.$axios({
-                    url:_this.$config.host+'/bucket/'+name,
+                    url:_this.$config.host+_this.$config.version+_this.$config.bucket+'/'+name+'?token=fuck-love',
                     method:'delete',
                  })
                  .then((response)=>{
-                    let status = response.data.status;
-                    if(status === 1){
-                        return msg(_this,'error','Delete Bucket Fail');
+                    let data = response.data;
+                    if(data.code === 1){
+                        return msg(_this,'error', data.result);
                     }
                     this.$store.dispatch('updateBucketList',{_this:_this});
                     return msg(_this,'success','Delete Bucket success');
@@ -201,12 +201,14 @@ export default {
             let addBucket = ()=>{
                 this.$axios({
                     method:'post',
-                    url:_this.$config.host+'/bucket',
-                    data:{'bucket':_this.StoreBucket}
+                    url:_this.$config.host+'/api/v1/bucket',
+                    data:{'bucket':_this.StoreBucket,'token':'fuck-love'}
                 })
                 .then((response)=>{
+                    let data = response.data;
+
                     let info = response.data.result.info;
-                    if(info !== undefined){
+                    if(data.code==0 && info !== undefined){
                         this.$store.dispatch('updateBucketList',{_this:_this});
                         _this.StoreBucket = '';
                         return msg(_this,'success','create Bucket success');                  
@@ -237,13 +239,13 @@ export default {
                 return msg(this,'error','Bucket不能为空');
             }
             this.$axios({
-                url:_this.$config.host+'/object',
+                url:_this.$config.host+'/api/v1/object',
                 method:'post',
-                data:{'dir':this.StoreObject,'bucket':this.isSelectBucket}
+                data:{'object':this.StoreObject,'bucket':this.isSelectBucket,'token':'fuck-love'}
             })
             .then((response)=>{
                 let data = response.data;
-                if(data.status != 0 && data.code != 201){
+                if(data.status != 200 && data.code != 0){
                     return msg(_this,'error',data.result);
                 }
                 _this.$store.dispatch('updateObjectList',{_this:_this,name:_this.isSelectBucket});

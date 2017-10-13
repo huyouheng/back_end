@@ -16,7 +16,6 @@
                                     <th>title</th>
                                     <th>author</th>
                                     <th>desc</th>
-                                    <th>sort</th>
                                     <th>created_at</th>
                                     <th>operation</th>
                                 </tr>
@@ -27,8 +26,16 @@
                                     <td><small>{{ item.title }}</small></td>
                                     <td><small>{{ item.author }}</small></td>
                                     <td><small>{{ item.description }}</small></td>
-                                    <td><small>{{ item.sort_id }}</small></td>
-                                    <td><small>{{ item.created_at }}</small></td>
+                                    <td>
+                                        <small>
+                                            <template v-if="typeof(item.created_at) == 'object'">
+                                                {{ item.created_at.date }}
+                                            </template>
+                                            <template v-else>
+                                                {{ item.created_at }}
+                                            </template>
+                                        </small>
+                                    </td>
                                     <td>
                                         <Button type="ghost" size="small" shape="circle" icon="android-delete" 
                                             @click="deleteArticle(item)">
@@ -68,7 +75,9 @@
         },
 		
 		created(){
-			 this.$store.dispatch('getArticleFromServer',{_this:this});
+            if(this.$store.getters.getAllArticleFromVuex.length == 0){
+			     this.$store.dispatch('getArticleFromServer',{_this:this});
+            }
 		},
         computed:{
             getArticleList(){
@@ -83,13 +92,13 @@
                 const _this = this;
                 let delArticle = ()=>{
                     this.$axios({
-                        url:_this.$config.host+'/article/'+item.id,
+                        url:_this.$config.host+_this.$config.article+'/'+item.id,
                         method:'delete',
                      })
                      .then((response)=>{
-                        let status = response.data.status;
+                        let code = response.data.code;
                         console.log(response);
-                        if(status === 1){
+                        if(code === 1){
                             return msg(_this,'error','Delete Article Fail');
                         }
                         _this.$store.commit('deleteOneItemArticle',{item:item});

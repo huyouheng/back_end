@@ -4,7 +4,7 @@
             <li class="list-group-item" v-for="item in object[name]">
                 {{item}}
                 <Button class="pull-right" type="ghost" size="small" shape="circle" icon="android-delete" 
-                    @click="isDeleteDucket(name,item)">
+                    @click="isDeleteObject(name,item)">
                 </Button>
             </li>
         </template>
@@ -44,17 +44,17 @@ export default {
         },
     },
     methods:{
-        isDeleteDucket:function(parent,child){
+        isDeleteObject:function(parent,child){
             const _this =this;
             let delObject = function(){
                 this.$axios({
-                    url:_this.$config.host+'/object/'+child,
+                    url:_this.$config.host+'/api/v1/object/',
                     method:'delete',
-                    data:{bucket:parent,object:child}
+                    data:{bucket:parent,object:child,token:'fuck-love'}
                 })
                 .then((response)=>{
                     let data = response.data;
-                    if(data.status == 0 && data.code == 204){
+                    if(data.status == 200 && data.code == 0){
                         _this.$store.dispatch('updateObjectList',{_this:_this,name:_this.name});
                         return this.$Notice.success({title: 'Fuck',desc: data.result});
                     }

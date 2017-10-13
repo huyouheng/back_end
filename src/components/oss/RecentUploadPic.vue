@@ -11,14 +11,14 @@
         <div class="panel-body">
             <div class="row">
                 <div class="demo-upload-list" v-for="item in loopAllPic">
-                    <template v-if="item.name">
+                    <template v-if="item.id">
                         <img v-lazy="item.url">
                         <div class="demo-upload-list-cover">
                             <Icon type="ios-eye-outline" @click.native="handleView(item)">
                             </Icon>
                             <Icon type="ios-trash-outline" @click.native="handleRemove(item)" v-if="needDelete">
                             </Icon>
-                            <Icon type="checkmark" v-if="needSelect" @click.native="isSelected(item.url)"></Icon>
+                            <Icon type="checkmark" v-if="needSelect" @click.native="isSelected(item.url,item.id)"></Icon>
                         </div>
                     </template>
                 </div>
@@ -118,7 +118,9 @@ export default {
         Simplert,
     },
     created(){
-        this.$store.dispatch('updatePictureList',{_this:this,page:this.curPage,isFront:1});
+        if(this.$store.getters.getPictureList.length == 0){
+            this.$store.dispatch('updatePictureList',{_this:this,page:this.curPage,isFront:1});
+        }
     },
     computed:{
         getBucketList(){
@@ -146,7 +148,7 @@ export default {
             return this.$store.state.oss.PicTotal;
         },
         getUploadAddress(){
-            return this.$config.host+'/file';
+            return this.$config.host+'/api/v1/file';
         },
     },
     methods:{
@@ -178,8 +180,7 @@ export default {
                 // console.log(page,this.maxPage); 
         },
         handleSuccess(res, file){ //上传文件成功
-            console.log(res);
-            if(res.code == 204 && res.status == 0){
+            if(res.code == 0 && res.status == 200){
                 this.$Notice.success({
                     title: 'Fuck',
                     desc: 'Upload File Success'
@@ -224,13 +225,14 @@ export default {
             let deletePic = function() {
                 const _this = this;
                 this.$axios({
-                    url:_this.$config.host+'/file/'+item.name,
+                    url:_this.$config.host+_this.$config.file,
                     method:'delete',
                     data:{data:item}
                 })
                 .then((response)=>{
                     let data = response.data;
-                    if(data.code == 204 && status == 0){
+                    console.log(data);
+                    if(data.code == 0 && status == 200){
                         _this.$store.commit('deleteOnePicture',{item:item});
                         _this.$store.commit('updatePicTotal',{count:-1});  //更新实际上图片的总数
                         _this.$Notice.success({
@@ -261,19 +263,19 @@ export default {
                 return ;
             }
             this.$axios({
-                url:_this.$config.host+'/file',
+                url:_this.$config.host+_this.$config.file,
                 method:'post',
                 data:{bucket:_this.selectUploadBucket,object:_this.selectUploadObject,
                     url_upload:_this.is_url_upload_address}
             })
             .then((response)=>{
                 let data = response.data;
-                if(data.status == 0 && data.code == 204){
+                if(data.status == 200 && data.code == 0){
                     _this.$store.commit('updatePicTotal',{count:1});  //更新实际上图片的总数
                     _this.$store.commit('updatePictureList',{data:data.result,isFront:1}); // 上传成功后将数据追加到状态管理中
                     _this.$Message.info('Upload Success!');
                     _this.is_url_upload_address='';
-                }else if(data.status==1 && data.code == 200){
+                }else if(data.status==200 && data.code == 1){
                     _this.$Notice.error({
                         title:'Fuck',
                         desc:data.result
@@ -286,8 +288,8 @@ export default {
                 console.log(error);
             })
         },
-        isSelected(url){
-            this.$emit('returnSelectEvent',url);
+        isSelected(url,id){
+            this.$emit('returnSelectEvent',url,id);
         },
     },
 }
